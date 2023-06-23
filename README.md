@@ -16,9 +16,10 @@ Included in this repo is a python library for compiling this script and using it
 # You can write comments like this! All blank lines are ignored.
 > Create a fictional title for the {{MOVIE_ADJECTIVE}} movie ever! This should not be a real movie; only supply me with the title.
 
-# blank lines and comments are all deleted
+# here we refer to the output of the first prompt!
 > Write a comprehensive anlaysis of {{1}}, discussing the following details: {{ANALYSIS_DETAILS}}. Make sure to sound as pedantic as possible.
 
+# likewise, we refer to the output of the 2nd prompt here
 ! if 'masterpiece' in {{2}}
 > Someone approaches you and says {{1}} is the worst movie ever made. How do you respond?
 ! elif 'worst' in {{2}}  # regex supported here!
@@ -26,13 +27,40 @@ Included in this repo is a python library for compiling this script and using it
 ! else
 > Someone feels passionately about {{1}}. They are frustrated with your apathy. What do you respond with?
 ! endif
+ # there must always be an endif
+```
+> You can check [init.py](./frameml/__init__.py) for an example of how to use it!
+
+Here's how you would use the python module:
+
+```py
+from frameml import Frame
+
+def llm(arg: str) -> str:
+    # Simply returns the first word
+    return f"{arg.split()[0]}"
+
+test1 = Frame(script="> Create a fictional title for the {{adjective}} movie ever! This should not be a real movie; only supply me with the title.")
+test1.compile(llm, adjective="most epic")
 ```
 
-The script could be called like so:
+* `Frame` is our class that wraps this script
+    * `script` refers to your actual text. It contains your hopefully valid frameml file.
+* `Frame.compile` is a function for actually querying the api
+    * `llm` is a function for querying the actual language model. It simply takes a string and returns one.
+        * You can create a wrapper around the openai library for example
+    * Any other arguments are `kwargs`.
+        * These are essentially just named parameters. Check [here](https://www.freecodecamp.org/news/args-and-kwargs-in-python/) to learn more
 
-* `FrameML` is our class that wraps this functionality
-* `model_call` is a `Callable` that takes a string and returns a string from your model
-* `FrameML.compile()` takes a `**kwargs`, named parameters
+
+For more examples, check the [examples folder](./examples)
+
+# Setup
+
+```bash
+pip install frameml
+```
+> It should be ready to use in your project now!
 
 
 # TODO:
