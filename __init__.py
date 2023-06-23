@@ -5,7 +5,7 @@ from typing import Callable, List, Dict
 # log.basicConfig(level=log.INFO)
 
 
-class FrameLLM:
+class FrameML:
     ### REGEXES FOR PARSING
     PAT_COMMENTS = r"(?:#.*|^$)"
     PAT_PROMPT = r"^>\s*(.+)$"
@@ -22,7 +22,7 @@ class FrameLLM:
         """
         Simply replaces the values in script with their variable names
         """
-        matches = re.findall(FrameLLM.PAT_VARIABLES, script)
+        matches = re.findall(FrameML.PAT_VARIABLES, script)
         for match in matches:
             if match not in json:
                 raise ValueError(
@@ -34,12 +34,12 @@ class FrameLLM:
     @staticmethod
     def is_valid(script: str) -> bool:
         """
-        Returns true if this is a valid FrameLLM script
+        Returns true if this is a valid FrameML script
         """
-        script = re.sub(FrameLLM.PAT_COMMENTS, "", script)
+        script = re.sub(FrameML.PAT_COMMENTS, "", script)
         return (
             re.match(
-                f"({FrameLLM.PAT_IF}|{FrameLLM.PAT_ELIF}|{FrameLLM.PAT_ENDIF}|{FrameLLM.PAT_ELSE}|{FrameLLM.PAT_PROMPT})",
+                f"({FrameML.PAT_IF}|{FrameML.PAT_ELIF}|{FrameML.PAT_ENDIF}|{FrameML.PAT_ELSE}|{FrameML.PAT_PROMPT})",
                 script,
                 re.MULTILINE,
             )
@@ -53,7 +53,7 @@ class FrameLLM:
         model_call: Callable[[str], str] | None = None,
     ) -> None:
         """
-        A wrapper class for compiling FrameLLM scripts
+        A wrapper class for compiling FrameML scripts
         """
         self.script = script
         self.tests = tests
@@ -70,9 +70,9 @@ class FrameLLM:
         """
         Compiles this self.script, replacing variables and sends data to the model
         """
-        if not FrameLLM.is_valid(self.script):
+        if not FrameML.is_valid(self.script):
             raise ValueError(f"This script is invalid!: {self.script}")
-        script = re.sub(FrameLLM.PAT_COMMENTS, "", self.script)
+        script = re.sub(FrameML.PAT_COMMENTS, "", self.script)
         lines = script.strip().splitlines()
         output = ""
         response_count = 1
@@ -116,14 +116,14 @@ class FrameLLM:
         condition = False
         while ptr < len(lines):
             line = lines[ptr]
-            match_prompt = re.match(FrameLLM.PAT_PROMPT, line)
-            match_if = re.match(FrameLLM.PAT_IF, line)
-            match_elif = re.match(FrameLLM.PAT_ELIF, line)
-            match_else = re.match(FrameLLM.PAT_ELSE, line)
+            match_prompt = re.match(FrameML.PAT_PROMPT, line)
+            match_if = re.match(FrameML.PAT_IF, line)
+            match_elif = re.match(FrameML.PAT_ELIF, line)
+            match_else = re.match(FrameML.PAT_ELSE, line)
 
             if match_prompt:
                 _ = _llm_call(
-                    FrameLLM.replace_values(match_prompt.group(1), json=values)
+                    FrameML.replace_values(match_prompt.group(1), json=values)
                 )  # do nothing with response for now
                 ptr += 1
             elif match_if:
@@ -131,50 +131,44 @@ class FrameLLM:
                 if re.search(string, values[var]):
                     condition = True
                     ptr += 1
-                    res = re.match(FrameLLM.PAT_PROMPT, lines[ptr])
+                    res = re.match(FrameML.PAT_PROMPT, lines[ptr])
                     while res:
-                        _ = _llm_call(
-                            FrameLLM.replace_values(res.group(1), json=values)
-                        )
+                        _ = _llm_call(FrameML.replace_values(res.group(1), json=values))
                         ptr += 1
-                        res = re.match(FrameLLM.PAT_PROMPT, lines[ptr])
+                        res = re.match(FrameML.PAT_PROMPT, lines[ptr])
                     while not res and ptr < len(lines):
-                        res = re.match(FrameLLM.PAT_ENDIF, lines[ptr])
+                        res = re.match(FrameML.PAT_ENDIF, lines[ptr])
                         ptr += 1
                 else:
-                    ptr = _filter(FrameLLM.PAT_BANG, lines, ptr)
+                    ptr = _filter(FrameML.PAT_BANG, lines, ptr)
             elif match_elif:
                 string, var = match_elif.groups()
                 if not condition and re.search(string, values[var]):
                     condition = True
                     ptr += 1
-                    res = re.match(FrameLLM.PAT_PROMPT, lines[ptr])
+                    res = re.match(FrameML.PAT_PROMPT, lines[ptr])
                     while res:
-                        _ = _llm_call(
-                            FrameLLM.replace_values(res.group(1), json=values)
-                        )
+                        _ = _llm_call(FrameML.replace_values(res.group(1), json=values))
                         ptr += 1
-                        res = re.match(FrameLLM.PAT_PROMPT, lines[ptr])
+                        res = re.match(FrameML.PAT_PROMPT, lines[ptr])
                     while not res and ptr < len(lines):
-                        res = re.match(FrameLLM.PAT_ENDIF, lines[ptr])
+                        res = re.match(FrameML.PAT_ENDIF, lines[ptr])
                         ptr += 1
                 else:
-                    ptr = _filter(FrameLLM.PAT_BANG, lines, ptr)
+                    ptr = _filter(FrameML.PAT_BANG, lines, ptr)
             elif match_else:
                 if not condition:
                     ptr += 1
-                    res = re.match(FrameLLM.PAT_PROMPT, lines[ptr])
+                    res = re.match(FrameML.PAT_PROMPT, lines[ptr])
                     while res:
-                        _ = _llm_call(
-                            FrameLLM.replace_values(res.group(1), json=values)
-                        )
+                        _ = _llm_call(FrameML.replace_values(res.group(1), json=values))
                         ptr += 1
-                        res = re.match(FrameLLM.PAT_PROMPT, lines[ptr])
+                        res = re.match(FrameML.PAT_PROMPT, lines[ptr])
                     while not res and ptr < len(lines):
-                        res = re.match(FrameLLM.PAT_ENDIF, lines[ptr])
+                        res = re.match(FrameML.PAT_ENDIF, lines[ptr])
                         ptr += 1
                 else:
-                    ptr = _filter(FrameLLM.PAT_BANG, lines, ptr)
+                    ptr = _filter(FrameML.PAT_BANG, lines, ptr)
             else:
                 ptr += 1
 
@@ -182,7 +176,6 @@ class FrameLLM:
 
     def to_json(self) -> Dict:
         d = dict()
-        d["name"] = self.name
         d["script"] = self.script
         d["file"] = self.file
         d["module"] = self.module
@@ -190,9 +183,8 @@ class FrameLLM:
         return d
 
     @staticmethod
-    def from_json(json: Dict) -> "FrameLLM":
-        # I am litierally god
-        l = FrameLLM(lambda: f"{json.get('script')}", json.get("model_call"))
+    def from_json(json: Dict) -> "FrameML":
+        l = FrameML(json["script"], json["model_call"])
         l.add_metadata(filename=json.get("file"), module=json.get("module"))
         return l
 
@@ -224,7 +216,7 @@ def main():
         "ANALYSIS_DETAILS": "sound design, themes, and cinematography",
     }
 
-    # temp = FrameLLM(template=script, model_call=llm_call)
+    # temp = FrameML(template=script, model_call=llm_call)
     # output = temp.compile(**values)
     # print(output)
 
