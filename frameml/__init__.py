@@ -19,28 +19,26 @@ class Frame:
 
     def __init__(
         self,
-        script: str,
-        tests: List[str] = list(),
+        script: str
     ) -> None:
         """
         A wrapper class for compiling Frame scripts
 
         Parameters:
         - script (str): A string that has FrameML syntax
-        - tests (List[str], optional): A list of tests to run on this prompt. Can be supplied later (not necessary for compilation)
         """
         self.script = script
-        self.tests = tests
+        self.tests = list()
 
     def add_tests(
         self,
-        tests: List[str] | None = None,
+        tests: List[str]
     ):
         """
         Used for adding tests
 
         Parameters:
-        - tests (List[str], optional): A list of tests to run on this prompt
+        - tests (List[str], optional): A list of tests to run on this prompt. Not necessary for compilation
         """
         self.tests = tests
 
@@ -71,15 +69,40 @@ class Frame:
         """
         Returns true if this object's script is in valid FrameML syntax
         """
-        script = re.sub(Frame.PAT_COMMENTS, "", self.script)
-        return (
-            re.match(
-                f"({Frame.PAT_IF}|{Frame.PAT_ELIF}|{Frame.PAT_ENDIF}|{Frame.PAT_ELSE}|{Frame.PAT_PROMPT})",
-                script,
-                re.MULTILINE,
-            )
-            is not None
-        )
+        if not self.script:
+            return False
+
+        PAT_COMMENTS = r"(?:#.*|^$)"
+        PAT_PROMPT = r"^>\s*(.+)$"
+        PAT_VARIABLES = r"(?<!\\){{([\w_]+)}}"
+        PAT_BANG = r"^!.*"
+        PAT_IF = f"^! if '(.*)' in {PAT_VARIABLES}"
+        PAT_ELIF = f"^! elif '(.*)' in {PAT_VARIABLES}"
+        PAT_ELSE = r"^! else$"
+        PAT_ENDIF = r"^! endif$"
+
+        pattern = fr"^(?:{PAT_COMMENTS}|{PAT_PROMPT}|{PAT_BANG}|{PAT_IF}|{PAT_ELIF}|{PAT_ELSE}|{PAT_ENDIF})$"
+        matches = re.findall(pattern, self.script, re.MULTILINE)
+
+        stack = []
+        for match in matches:
+            if match[0].startswith("! if"):
+                stack.append("if")
+            elif match[0].startswith("! elif"):
+                if not stack or stack[-1] not in ["if", "elif"]:
+                if not stack or stack[-1] not in ["if", "elif"]:
+                    return False
+                stack.append("elif")
+            elif match[0] == "! else":
+                if not stack or stack[-1] not in ["if", "elif"]:
+                    return False
+                stack[-1] = "else"
+            elif match[0] == "! endif":
+                if not stack or stack[-1] not in ["if", "elif", "else"]:
+                    return False
+                stack.pop()
+
+        return len(stack) == 0
 
     def compile(self, model_call: Callable[[str], str], **kwargs) -> str:
         """
