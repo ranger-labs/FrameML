@@ -14,17 +14,17 @@ Included in this repo is a python library for compiling this script and using it
 
 ```
 # You can write comments like this! All blank lines are ignored.
-> Create a fictional title for the $MOVIE_ADJECTIVE movie ever! This should not be a real movie; only supply me with the title.
+> Create a fictional title for the {{MOVIE_ADJECTIVE}} movie ever! This should not be a real movie; only supply me with the title.
 
 # blank lines and comments are all deleted
-> Write a comprehensive anlaysis of $1, discussing the following details: $ANALYSIS_DETAILS. Make sure to sound as pedantic as possible.
+> Write a comprehensive anlaysis of {{1}}, discussing the following details: {{ANALYSIS_DETAILS}}. Make sure to sound as pedantic as possible.
 
-! if 'masterpiece' in $2
-> Someone approaches you and says $1 is the worst movie ever made. How do you respond?
-! elif 'worst' in $2  # regex supported here!
-> Some subhuman piece of garbage online actually thinks that $1 is the best movie made. How do you respond?
+! if 'masterpiece' in {{2}}
+> Someone approaches you and says {{1}} is the worst movie ever made. How do you respond?
+! elif 'worst' in {{2}}  # regex supported here!
+> Some subhuman piece of garbage online actually thinks that {{1}} is the best movie made. How do you respond?
 ! else
-> Someone feels passionately about $1. They are frustrated with your apathy. What do you respond with?
+> Someone feels passionately about {{1}}. They are frustrated with your apathy. What do you respond with?
 ! endif
 ```
 
