@@ -1,0 +1,6 @@
+> Give me a funny joke!
+! if 'Knock Knock' in {{1}}
+> Who's there?
+! else
+> That was a really funny joke!
+! endif
