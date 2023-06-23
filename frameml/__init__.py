@@ -24,6 +24,10 @@ class Frame:
     ) -> None:
         """
         A wrapper class for compiling Frame scripts
+
+        Parameters:
+        - script (str): A string that has FrameML syntax
+        - tests (List[str], optional): A list of tests to run on this prompt. Can be supplied later (not necessary for compilation)
         """
         self.script = script
         self.tests = tests
@@ -44,6 +48,15 @@ class Frame:
     def replace_values(script: str, json):
         """
         Simply replaces the values in script with their variable names
+
+        Parameters:
+        - script (str): A string that has FrameML syntax
+        - json (Dict): A dictionary that contains replacement values.
+
+        Examples:
+        - script = "> Hey {{name}}!"
+        - json = {"name": "Robert"}
+        returns "> Hey Robert!"
         """
         matches = re.findall(Frame.PAT_VARIABLES, script)
         for match in matches:
@@ -56,7 +69,7 @@ class Frame:
 
     def is_valid(self) -> bool:
         """
-        Returns true if this is a valid Frame script
+        Returns true if this object's script is in valid FrameML syntax
         """
         script = re.sub(Frame.PAT_COMMENTS, "", self.script)
         return (
@@ -71,6 +84,10 @@ class Frame:
     def compile(self, model_call: Callable[[str], str], **kwargs) -> str:
         """
         Compiles this self.script, replacing variables and sends data to the model
+
+        Parameters:
+        - model_call (Callable[[str], str]): A function that queries your model with a string and returns a string
+        - kwargs: Named replacement values!
         """
         if not self.is_valid():
             raise ValueError(f"This script is invalid!: {self.script}")
