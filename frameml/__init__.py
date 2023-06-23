@@ -5,7 +5,7 @@ from typing import Callable, List, Dict
 # log.basicConfig(level=log.INFO)
 
 
-class FrameML:
+class Frame:
     ### REGEXES FOR PARSING
     PAT_COMMENTS = r"(?:#.*|^$)"
     PAT_PROMPT = r"^>\s*(.+)$"
@@ -70,7 +70,7 @@ class FrameML:
         """
         Compiles this self.script, replacing variables and sends data to the model
         """
-        if not FrameML.is_valid(self.script):
+        if not Frame.is_valid(self.script):
             raise ValueError(f"This script is invalid!: {self.script}")
         script = re.sub(FrameML.PAT_COMMENTS, "", self.script)
         lines = script.strip().splitlines()
