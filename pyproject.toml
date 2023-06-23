@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "FrameML"
+version = "0.1.0"
+description = "A lightweight markup language for interacting with machine learning models"
+authors = [{ name = "Jake Downie" }, {name = "Ronan Maharaj"}]
+requires-python = ">=3.6"
+readme = "README.md"
+
+[project.urls]
+homepage = "https://github.com/ranger-labs/FrameML"
+repository = "https://github.com/ranger-labs/FrameML"
