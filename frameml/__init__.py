@@ -17,12 +17,36 @@ class Frame:
     PAT_ENDIF = r"^! endif"
     ### REGEX_END
 
+    def __init__(
+        self,
+        script: str,
+        tests: List[str] = list(),
+    ) -> None:
+        """
+        A wrapper class for compiling Frame scripts
+        """
+        self.script = script
+        self.tests = tests
+
+    def add_metadata(
+        self,
+        filename: str | None = None,
+        module: str | None = None,
+        tests: List[str] | None = None,
+    ):
+        """
+        Used for adding additional metadata
+        """
+        self.file = filename
+        self.tests = tests
+        self.module = module
+
     @staticmethod
     def replace_values(script: str, json):
         """
         Simply replaces the values in script with their variable names
         """
-        matches = re.findall(FrameML.PAT_VARIABLES, script)
+        matches = re.findall(Frame.PAT_VARIABLES, script)
         for match in matches:
             if match not in json:
                 raise ValueError(
@@ -34,45 +58,25 @@ class Frame:
     @staticmethod
     def is_valid(script: str) -> bool:
         """
-        Returns true if this is a valid FrameML script
+        Returns true if this is a valid Frame script
         """
-        script = re.sub(FrameML.PAT_COMMENTS, "", script)
+        script = re.sub(Frame.PAT_COMMENTS, "", script)
         return (
             re.match(
-                f"({FrameML.PAT_IF}|{FrameML.PAT_ELIF}|{FrameML.PAT_ENDIF}|{FrameML.PAT_ELSE}|{FrameML.PAT_PROMPT})",
+                f"({Frame.PAT_IF}|{Frame.PAT_ELIF}|{Frame.PAT_ENDIF}|{Frame.PAT_ELSE}|{Frame.PAT_PROMPT})",
                 script,
                 re.MULTILINE,
             )
             is not None
         )
 
-    def __init__(
-        self,
-        script: str,
-        tests: List[str],
-        model_call: Callable[[str], str] | None = None,
-    ) -> None:
-        """
-        A wrapper class for compiling FrameML scripts
-        """
-        self.script = script
-        self.tests = tests
-        self.model_call = model_call
-
-    def add_metadata(self, filename: str | None = None, module: str | None = None):
-        """
-        Used for adding additional metadata
-        """
-        self.file = filename
-        self.module = module
-
-    def compile(self, **kwargs) -> str:
+    def compile(self, model_call: Callable[[str], str], **kwargs) -> str:
         """
         Compiles this self.script, replacing variables and sends data to the model
         """
         if not Frame.is_valid(self.script):
             raise ValueError(f"This script is invalid!: {self.script}")
-        script = re.sub(FrameML.PAT_COMMENTS, "", self.script)
+        script = re.sub(Frame.PAT_COMMENTS, "", self.script)
         lines = script.strip().splitlines()
         output = ""
         response_count = 1
@@ -87,9 +91,9 @@ class Frame:
 
             log.info(f"Sending: '{arg}'")
 
-            if self.model_call == None:
+            if model_call == None:
                 raise ValueError("No model call function was supplied!")
-            resp = self.model_call(arg)
+            resp = model_call(arg)
             values[f"{response_count}"] = resp
             output += f">{arg}\n>>{resp}\n"
             response_count += 1
@@ -116,14 +120,14 @@ class Frame:
         condition = False
         while ptr < len(lines):
             line = lines[ptr]
-            match_prompt = re.match(FrameML.PAT_PROMPT, line)
-            match_if = re.match(FrameML.PAT_IF, line)
-            match_elif = re.match(FrameML.PAT_ELIF, line)
-            match_else = re.match(FrameML.PAT_ELSE, line)
+            match_prompt = re.match(Frame.PAT_PROMPT, line)
+            match_if = re.match(Frame.PAT_IF, line)
+            match_elif = re.match(Frame.PAT_ELIF, line)
+            match_else = re.match(Frame.PAT_ELSE, line)
 
             if match_prompt:
                 _ = _llm_call(
-                    FrameML.replace_values(match_prompt.group(1), json=values)
+                    Frame.replace_values(match_prompt.group(1), json=values)
                 )  # do nothing with response for now
                 ptr += 1
             elif match_if:
@@ -131,44 +135,44 @@ class Frame:
                 if re.search(string, values[var]):
                     condition = True
                     ptr += 1
-                    res = re.match(FrameML.PAT_PROMPT, lines[ptr])
+                    res = re.match(Frame.PAT_PROMPT, lines[ptr])
                     while res:
-                        _ = _llm_call(FrameML.replace_values(res.group(1), json=values))
+                        _ = _llm_call(Frame.replace_values(res.group(1), json=values))
                         ptr += 1
-                        res = re.match(FrameML.PAT_PROMPT, lines[ptr])
+                        res = re.match(Frame.PAT_PROMPT, lines[ptr])
                     while not res and ptr < len(lines):
-                        res = re.match(FrameML.PAT_ENDIF, lines[ptr])
+                        res = re.match(Frame.PAT_ENDIF, lines[ptr])
                         ptr += 1
                 else:
-                    ptr = _filter(FrameML.PAT_BANG, lines, ptr)
+                    ptr = _filter(Frame.PAT_BANG, lines, ptr)
             elif match_elif:
                 string, var = match_elif.groups()
                 if not condition and re.search(string, values[var]):
                     condition = True
                     ptr += 1
-                    res = re.match(FrameML.PAT_PROMPT, lines[ptr])
+                    res = re.match(Frame.PAT_PROMPT, lines[ptr])
                     while res:
-                        _ = _llm_call(FrameML.replace_values(res.group(1), json=values))
+                        _ = _llm_call(Frame.replace_values(res.group(1), json=values))
                         ptr += 1
-                        res = re.match(FrameML.PAT_PROMPT, lines[ptr])
+                        res = re.match(Frame.PAT_PROMPT, lines[ptr])
                     while not res and ptr < len(lines):
-                        res = re.match(FrameML.PAT_ENDIF, lines[ptr])
+                        res = re.match(Frame.PAT_ENDIF, lines[ptr])
                         ptr += 1
                 else:
-                    ptr = _filter(FrameML.PAT_BANG, lines, ptr)
+                    ptr = _filter(Frame.PAT_BANG, lines, ptr)
             elif match_else:
                 if not condition:
                     ptr += 1
-                    res = re.match(FrameML.PAT_PROMPT, lines[ptr])
+                    res = re.match(Frame.PAT_PROMPT, lines[ptr])
                     while res:
-                        _ = _llm_call(FrameML.replace_values(res.group(1), json=values))
+                        _ = _llm_call(Frame.replace_values(res.group(1), json=values))
                         ptr += 1
-                        res = re.match(FrameML.PAT_PROMPT, lines[ptr])
+                        res = re.match(Frame.PAT_PROMPT, lines[ptr])
                     while not res and ptr < len(lines):
-                        res = re.match(FrameML.PAT_ENDIF, lines[ptr])
+                        res = re.match(Frame.PAT_ENDIF, lines[ptr])
                         ptr += 1
                 else:
-                    ptr = _filter(FrameML.PAT_BANG, lines, ptr)
+                    ptr = _filter(Frame.PAT_BANG, lines, ptr)
             else:
                 ptr += 1
 
@@ -179,12 +183,12 @@ class Frame:
         d["script"] = self.script
         d["file"] = self.file
         d["module"] = self.module
-        d["model_call"] = self.model_call
+        d["tests"] = self.tests
         return d
 
     @staticmethod
-    def from_json(json: Dict) -> "FrameML":
-        l = FrameML(json["script"], json["model_call"])
+    def from_json(json: Dict) -> "Frame":
+        l = Frame(json["script"])
         l.add_metadata(filename=json.get("file"), module=json.get("module"))
         return l
 
@@ -195,17 +199,20 @@ class Frame:
 def main():
     script = """
 # You can write comments like this! All blank lines are ignored.
-> Create a fictional title for the $MOVIE_ADJECTIVE movie ever! This should not be a real movie; only supply me with the title.
+> Create a fictional title for the {{MOVIE_ADJECTIVE}} movie ever! This should not be a real movie; only supply me with the title.
 
-> Write a comprehensive analysis of $1, discussing the following details: $ANALYSIS_DETAILS. Make sure to sound as pedantic as possible.
+# here we refer to the output of the first prompt!
+> Write a comprehensive anlaysis of {{1}}, discussing the following details: {{ANALYSIS_DETAILS}}. Make sure to sound as pedantic as possible.
 
-! if 'masterpiece' in $2
-> Someone approaches you and says '$1' is the worst movie ever made. How do you respond?
-! elif 'worst' in $2  # regex supported here!
-> Some subhuman piece of garbage online actually thinks that '$1' is the best movie made. How do you respond?
+# likewise, we refer to the output of the 2nd prompt here
+! if 'masterpiece' in {{2}}
+> Someone approaches you and says {{1}} is the worst movie ever made. How do you respond?
+! elif 'worst' in {{2}}  # regex supported here!
+> Some subhuman piece of garbage online actually thinks that {{1}} is the best movie made. How do you respond?
 ! else
-> Someone has different thoughts about '$1' compared to you. What do you respond with?
+> Someone feels passionately about {{1}}. They are frustrated with your apathy. What do you respond with?
 ! endif
+ # there must always be an endif
     """
 
     def llm_call(arg: str) -> str:
@@ -216,9 +223,9 @@ def main():
         "ANALYSIS_DETAILS": "sound design, themes, and cinematography",
     }
 
-    # temp = FrameML(template=script, model_call=llm_call)
-    # output = temp.compile(**values)
-    # print(output)
+    temp = Frame(script)
+    output = temp.compile(llm_call, **values)
+    print(output)
 
 
 if __name__ == "__main__":
