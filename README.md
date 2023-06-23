@@ -4,7 +4,7 @@ This is meant to be a markup language for interacting with machine learning mode
 
 Core features currently include:
 * Variables!
-    * These can be from a user supplied dictionary or special variables like: `$1`, previous inputs
+    * These can be from a user supplied dictionary or special variables like: `{{1}}`, previous inputs
 * Control flow!
     * Extremely basic if statementst are provided
     * Check [TODO](#TODO) for more info
