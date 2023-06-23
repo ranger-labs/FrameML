@@ -28,18 +28,17 @@ class Frame:
         self.script = script
         self.tests = tests
 
-    def add_metadata(
+    def add_tests(
         self,
-        filename: str | None = None,
-        module: str | None = None,
         tests: List[str] | None = None,
     ):
         """
-        Used for adding additional metadata
+        Used for adding tests
+
+        Parameters:
+        - tests (List[str], optional): A list of tests to run on this prompt
         """
-        self.file = filename
         self.tests = tests
-        self.module = module
 
     @staticmethod
     def replace_values(script: str, json):
@@ -55,12 +54,11 @@ class Frame:
             script = re.sub("{{" + f"{match}" + "}}", json[match], script)
         return script
 
-    @staticmethod
-    def is_valid(script: str) -> bool:
+    def is_valid(self) -> bool:
         """
         Returns true if this is a valid Frame script
         """
-        script = re.sub(Frame.PAT_COMMENTS, "", script)
+        script = re.sub(Frame.PAT_COMMENTS, "", self.script)
         return (
             re.match(
                 f"({Frame.PAT_IF}|{Frame.PAT_ELIF}|{Frame.PAT_ENDIF}|{Frame.PAT_ELSE}|{Frame.PAT_PROMPT})",
@@ -74,7 +72,7 @@ class Frame:
         """
         Compiles this self.script, replacing variables and sends data to the model
         """
-        if not Frame.is_valid(self.script):
+        if not self.is_valid():
             raise ValueError(f"This script is invalid!: {self.script}")
         script = re.sub(Frame.PAT_COMMENTS, "", self.script)
         lines = script.strip().splitlines()
@@ -181,15 +179,13 @@ class Frame:
     def to_json(self) -> Dict:
         d = dict()
         d["script"] = self.script
-        d["file"] = self.file
-        d["module"] = self.module
         d["tests"] = self.tests
         return d
 
     @staticmethod
     def from_json(json: Dict) -> "Frame":
         l = Frame(json["script"])
-        l.add_metadata(filename=json.get("file"), module=json.get("module"))
+        l.add_tests(json["tests"])
         return l
 
     def __str__(self) -> str:
