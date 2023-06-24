@@ -17,10 +17,7 @@ class Frame:
     PAT_ENDIF = r"^! endif"
     ### REGEX_END
 
-    def __init__(
-        self,
-        script: str
-    ) -> None:
+    def __init__(self, script: str) -> None:
         """
         A wrapper class for compiling Frame scripts
 
@@ -30,10 +27,7 @@ class Frame:
         self.script = script
         self.tests = list()
 
-    def add_tests(
-        self,
-        tests: List[str]
-    ):
+    def add_tests(self, tests: List[str]):
         """
         Used for adding tests
 
@@ -81,7 +75,7 @@ class Frame:
         PAT_ELSE = r"^! else$"
         PAT_ENDIF = r"^! endif$"
 
-        pattern = fr"^(?:{PAT_COMMENTS}|{PAT_PROMPT}|{PAT_BANG}|{PAT_IF}|{PAT_ELIF}|{PAT_ELSE}|{PAT_ENDIF})$"
+        pattern = rf"^(?:{PAT_COMMENTS}|{PAT_PROMPT}|{PAT_BANG}|{PAT_IF}|{PAT_ELIF}|{PAT_ELSE}|{PAT_ENDIF})$"
         matches = re.findall(pattern, self.script, re.MULTILINE)
 
         stack = []
@@ -89,7 +83,6 @@ class Frame:
             if match[0].startswith("! if"):
                 stack.append("if")
             elif match[0].startswith("! elif"):
-                if not stack or stack[-1] not in ["if", "elif"]:
                 if not stack or stack[-1] not in ["if", "elif"]:
                     return False
                 stack.append("elif")
